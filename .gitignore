@@ -1,0 +1,12 @@
+node_modules/
+web/
+dist/
+work/
+data/
+.openai/
+.wrangler/
+.next/
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
