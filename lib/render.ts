@@ -1,6 +1,6 @@
 import { timing } from './config.mjs';
 import { STYLES } from './styles.mjs';
-export type Config={lines:string[];style:string;color:string;outline:string;width:number;height:number;fontSize:number;stroke:number;depth:number;glow:number;hold:number;transition:number;animation:string;align:string;highlight:boolean;visible:boolean;font:string;singleMode:string};
+export type Config={language:string;lines:string[];style:string;color:string;outline:string;width:number;height:number;fontSize:number;stroke:number;depth:number;glow:number;hold:number;transition:number;animation:string;align:string;highlight:boolean;visible:boolean;font:string;singleMode:string};
 type TextLayer=HTMLCanvasElement & {textBounds?:{x:number;width:number;stops:number[]}};
 const fontLoads=new Map<string,Promise<void>>();
 export function loadFont(font='sans'){const family=font==='serif'?'StudioSerif':'StudioSans';let promise=fontLoads.get(family);if(!promise){promise=document.fonts.load(`900 70px ${family}`).then(()=>undefined);fontLoads.set(family,promise);}return promise;}

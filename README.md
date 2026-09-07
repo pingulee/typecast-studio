@@ -1,82 +1,75 @@
-# 直播花字工作室 · Typecast Studio
+# Typecast Studio
 
-为抖音直播伴侣制作实时更新的中文艺术字。支持 **14 款样式、2 套思源字体、10 种动画**，可使用单条文案，也可将多条文案逐条轮播。无需账号、API Key 或付费服务。
+**English** · [한국어](docs/README.ko.md) · [简体中文](docs/README.zh-CN.md)
 
-[下载 Windows 安装程序](https://github.com/pingulee/typecast-studio/releases/latest) · [查看源代码](https://github.com/pingulee/typecast-studio)
+Animated text for your live stream, with **14 designs, 2 fonts and 10 animations**. Show one line continuously or rotate several entries. Connect a live output window to Douyin Live Companion, or export transparent PNG, GIF and WebP files.
 
-## 安装与启动
+## Download and install
 
-1. 下载 Releases 中的 `Typecast-Studio-Setup-1.0.0.exe`，双击安装。
-2. 默认安装到 `C:\Program Files\Typecast Studio`，安装时需要管理员确认。
-3. “登录 Windows 后自动启动”默认勾选，可在安装时取消。
-4. 安装完成后，双击桌面或开始菜单中的 **直播花字工作室**。
-5. 浏览器自动打开编辑器：`http://localhost:4318`。
+**[Download the Windows installer](https://github.com/pingulee/typecast-studio/releases/latest)**
 
-安装程序包含运行环境和中文字体；日常使用不需要联网。Windows 10/11 x64，独立字幕窗口需电脑已安装 Microsoft Edge 或 Google Chrome。安装程序尚未进行代码签名，首次运行是否提示取决于 Windows 的安全设置。
+Download `Typecast-Studio-Setup-1.1.0.exe`, install it, and open **Typecast Studio** from your desktop. **You do not need to install Node.js, npm, Python or any developer tools. No commands or account are required.** The installer includes its own runtime and Chinese/Korean-capable fonts. Daily use works offline.
 
-自动启动只启动后台服务，不弹出浏览器，也不自动打开字幕窗口。登录后从桌面图标打开编辑器，再点“打开字幕窗口”。如需暂停自动启动，可在 Windows **设置 → 应用 → 启动**中关闭 TypecastStudio。
+- Windows 10/11 x64. Edge or Chrome is needed for the separate output window.
+- The installer starts in **English**, with a choice of **English / 한국어 / 简体中文**. It remembers the last installer language.
+- The editor uses your installation language on first use. Choose a different language in the top bar; it saves automatically. Changing the interface language never translates or replaces your own text.
+- Without an installation preference, the default is English. Existing 1.0 settings are preserved and use English until you select another language.
+- Default location: `C:\Program Files\Typecast Studio`. Installation needs administrator confirmation.
+- **Start automatically when I sign in** is selected by default; you can uncheck it. Startup runs the background service without opening a browser or output window.
+- The installer is not code-signed; Windows may show a publisher warning.
 
-## 连接抖音直播伴侣
+## Connect Douyin Live Companion
 
-本程序不假定直播伴侣支持直接添加任意网页链接，默认使用 **独立窗口捕获 + 纯色抠图**。
+1. Enter your text, then select a design and animation.
+2. Under **Connect Douyin Live Companion**, choose a green/blue/black background and click **Open output window**.
+3. In Douyin, choose **Add source → Window (添加素材 → 窗口)** and select the Typecast Studio output window. Its title follows your editor language.
+4. If available for that source, enable **Chroma key (绿幕抠图 / 颜色抠图)**. Sample the background color and crop the title bar/borders.
+5. Position the text. Later changes in the editor appear automatically in the output window.
 
-1. 在编辑器中选好文案、样式与动画。
-2. 在“连接抖音直播伴侣”中选择抠图底色，点击 **打开字幕窗口**。
-3. 直播伴侣中选择 **添加素材 → 窗口**，找到 **字幕输出 - Typecast Studio**。
-4. 在该素材设置中使用 **绿幕抠图 / 颜色抠图**，用吸管吸取纯色背景；必要时裁去窗口标题栏和边框。
-5. 调整字幕大小和位置。以后在编辑器里改字，输出窗口会自动更新，无需反复导出或重新添加素材。
+Use blue behind green text and green behind blue text. Keep the output window open and do not minimize it. Capture behavior depends on your graphics hardware and streaming software version.
 
-绿色文字建议用纯蓝底，蓝色文字建议用纯绿底。若样式同时含有这两种颜色，可以换一种样式或使用不抠图的黑底。窗口捕获不保留网页本身的 alpha 透明度，因此绿色/蓝色需要在直播软件中抠除。不要最小化或关闭字幕窗口；不同显卡和捕获方式可能影响后台窗口是否持续刷新。
+Douyin menus and chroma key availability vary. If the window source has no chroma key option, use a black background or export transparent PNG and add an image source. GIF/WebP source support also depends on the Douyin version. This is an independent tool, not an official Douyin plugin. Actual capture/chroma key should be checked on your streaming PC.
 
-直播伴侣不同版本的菜单名称和素材能力可能不同。如果当前“窗口”素材没有抠图入口，可以先用黑底输出，或导出透明 PNG 后添加图片素材。GIF、WebP 是否可直接作为素材使用，以伴侣当前版本支持的格式为准。本项目不是抖音官方插件，没有调用抖音账号或官方互动插件接口。
+[Official Douyin chroma key guide](https://streamingtool.douyin.com/docs/guide_ztb12xj7)
 
-官方抠图参数说明：https://streamingtool.douyin.com/docs/guide_ztb12xj7
+## Fixed links and live updates
 
-### 手动打开 / 其他支持网页源的软件
+Run Typecast Studio and your streaming software on the **same computer**.
 
-- 编辑器：`http://localhost:4318`
-- 绿底字幕：`http://localhost:4318/capture?key=green`
-- 蓝底字幕：`http://localhost:4318/capture?key=blue`
-- 黑底字幕：`http://localhost:4318/capture?key=black`
-- 真正透明的网页输出：`http://localhost:4318/overlay`
+| Page | Address |
+| --- | --- |
+| Editor | `http://localhost:4318` |
+| Green output | `http://localhost:4318/capture?key=green` |
+| Blue output | `http://localhost:4318/capture?key=blue` |
+| Black output | `http://localhost:4318/capture?key=black` |
+| Transparent web output | `http://localhost:4318/overlay` |
 
-透明链接适用于支持网页源的软件；不要把它当作所有直播伴侣版本都能导入的入口。本程序和直播伴侣应在同一台电脑运行。网站只监听本机，不对互联网开放。
+The transparent link is for software that supports web sources. Do not assume every Douyin version accepts arbitrary web links. A captured window itself does not preserve web alpha; use chroma key when supported. These local links are not public internet pages.
 
-## 文案与动画
+## Text, designs and animation
 
-- **只写一条也可以**。默认“入场后常驻”：入场后一直保留，不再定时消失。
-- 单条选择“按所选效果循环播放”时，会反复播放所选效果。
-- “轻柔呼吸”和“循环滚动”在单条常驻模式下仍持续运动。
-- 两条及以上按顺序轮播，每次只显示一条。
-- 空白文案自动跳过；全部为空时显示为空。
-- 一格最多 160 个字符，最多 8 格；换行转为空格，长句自动缩小以保持单行。
+- **One entry is enough.** Stay visible plays the entrance once and keeps the text on screen; pulse and scrolling continue moving. Select repeat to loop the chosen effect.
+- Multiple entries rotate one at a time. Blank entries are skipped; all blank means no text.
+- Up to 8 entries, 160 characters each. Line breaks become spaces; long text shrinks to fit one line.
+- Animations: slide up, slide down, slide sideways, fade, pop in, reveal wipe, typewriter, gentle pulse, scrolling marquee, instant cut.
+- Designs: Golden 3D, Crystal Blue, Neon Purple, Outlined White, Rose Gold, Flame Orange, Jade Green, Mirror Silver, Comic Pop, Cyber Glow, Pearl Serif, Candy Pink, Classic Outline, Custom Color.
+- Adjust font, size, outline, extrusion, glow, alignment, timing and contact ID highlighting.
 
-动画：向上滑入、向下滑入、横向滑入、淡入淡出、弹性缩放、光幕展开、逐字出现、轻柔呼吸、循环滚动、直接显示。
+![Text design examples](docs/designs.png)
 
-样式：鎏金立体、冰晶蓝、霓虹紫、纯白描边、玫瑰金、烈焰橙、翡翠绿、镜面银、漫画气泡、赛博电光、珍珠雅宋、糖果粉、国风空心、自选颜色。支持切换思源黑体/宋体并调节字号、描边、立体深度、发光、对齐与联系方式高亮。
+## Save, export and close
 
-![样式预览](docs/designs.png)
+Changes save and sync after about 0.6 seconds. Settings, including the interface language, live in `%LOCALAPPDATA%\Typecast Studio\settings.json`, outside Program Files. The output window uses its own browser profile, separate from your regular browser accounts.
 
-## 保存、更新和退出
+Export transparent PNG, animated GIF or animated WebP. WebP preserves partial transparency; GIF has only transparent/opaque pixels, so soft glow/fades may have harder edges. A single text set to stay visible exports a one-time entrance; pulse, scrolling and repeating modes loop. PNG exports the full current entry. The preview checkerboard is never exported.
 
-- 修改后约 0.6 秒自动保存并同步输出。
-- 配置保存到 `%LOCALAPPDATA%\Typecast Studio\settings.json`，不向 Program Files 写入设置。
-- 字幕窗口使用自己的浏览器配置目录，不使用日常浏览器登录资料。
-- 编辑器标签页可以关闭，后台仍运行；字幕输出窗口在直播期间需保持打开。
-- 开始菜单中的 **退出后台服务**可以结束后台运行；关闭编辑器标签页不会结束后台。
-- 如果 4318 端口已有旧版程序，先退出旧版再启动新版本。
-- 如从旧版便携包迁移，退出两版程序后，可把旧 `data/settings.json` 复制到上述用户数据目录。新版会补齐新增字段。
-- Windows 设置中的“已安装的应用”可卸载程序。卸载会移除启动项和快捷方式，但保留用户 AppData 中的文案设置及字幕浏览器配置，便于重新安装。
+Closing the editor tab leaves the background service running. Use **Start menu → Typecast Studio → Stop background service** to stop it. Disable automatic startup in **Windows Settings → Apps → Startup**. Uninstall from Windows installed apps; this removes program files, shortcuts and startup registration but preserves your AppData settings/profile for reinstallation.
 
-## 导出图片
+To upgrade, stop the old service and install the new EXE. If port 4318 is occupied, exit the old version first. To migrate a portable version, stop both apps and copy its `data/settings.json` to the AppData location above. Missing new settings use defaults.
 
-支持透明 PNG、动画 GIF、动画 WebP。WebP 保留半透明边缘；GIF 仅支持透明/不透明两级，发光与淡入边缘可能较硬。
+## For developers only
 
-单条常驻的入场动画导出后只播放一次并停留；呼吸、滚动以及轮播模式的导出会循环。PNG 保存当前正在预览的完整文案。棋盘格仅用于预览，不会写入下载文件。
-
-## 开发和检查
-
-需要 Node.js 24。本项目使用 React、Vite、本机 Node HTTP/SSE 服务和 Canvas 渲染，不依赖云端图像生成。
+Regular users only need the installer. The commands below build from source with Node.js 24.
 
 ```sh
 npm ci
@@ -88,23 +81,10 @@ npm run build
 npm start
 ```
 
-`npm start` 会实际启动本机服务。只执行 build/check/test 不会监听网络端口。
+`npm start` starts a local server. Build/check/test do not listen on network ports. The app uses React, Vite, Canvas and a local Node HTTP/SSE service.
 
-### 构建安装程序
+To build the installer, install NSIS and put `makensis` on PATH (or set `MAKENSIS` to its full path), then run `npm run package:windows` after building. The script downloads and verifies the official Node.js 24.19.0 Windows x64 runtime. `TYPECAST_NODE_EXE` can point to an existing download; SHA-256 is still checked. Installers appear in `dist/`.
 
-安装 NSIS，并将 `makensis` 加入 PATH（或设置 `MAKENSIS` 为可执行文件完整路径）。
+GitHub Actions builds on Windows and checks installation, language selection/persistence, startup registration, service startup, configuration updates, restart and uninstall in all three languages. Tests also cover API/SSE persistence, translation coverage, canvas rendering and GIF/WebP encoding. Actual Douyin capture is not part of automated tests. Optional WebMCP is only registered in browsers that support it.
 
-```sh
-npm run build
-npm run package:windows
-```
-
-打包脚本下载并校验 Node.js 24.19.0 Windows x64 官方运行文件，产物位于 `dist/`。可通过 `TYPECAST_NODE_EXE` 指向已下载的 Windows node.exe；脚本仍会校验官方 SHA-256。GitHub Actions 中包含 Windows 安装、用户数据写入、启动项检查、HTTP 更新及卸载测试。
-
-不向仓库提交用户设置、浏览器配置、运行文件缓存、node_modules 或构建产物。示例联系方式为占位符，请自行替换。
-
-## 兼容性与验证范围
-
-包含配置/API/SSE 持久化测试、全部样式和动画的 Canvas 检查、GIF/WebP 编码检查与 Windows 安装烟雾测试。实际直播伴侣画面捕获/抠图效果需要在朋友使用的 Windows 版本、显卡和伴侣版本中确认；不宣称已经实机验证所有伴侣版本。可选 WebMCP 仅在支持该接口的浏览器注册。
-
-字体：Noto Sans CJK / Noto Serif CJK，SIL Open Font License，见 `public/fonts/`。其他依赖保留各自许可；安装文件包含第三方许可清单。本项目源代码采用 MIT 许可。
+Source: MIT. Fonts: Noto Sans CJK / Noto Serif CJK, SIL OFL; see `public/fonts/`. Dependencies retain their licenses; the installer includes license notices. User settings, profiles, runtime caches and build outputs are not committed to the repository.

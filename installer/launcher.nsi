@@ -1,5 +1,5 @@
 Unicode true
-Name "直播花字工作室"
+Name "Typecast Studio"
 OutFile "${OUTPUT}"
 Icon "${ICON}"
 RequestExecutionLevel user
@@ -10,7 +10,23 @@ ShowInstDetails nevershow
 !include "LogicLib.nsh"
 Var Args
 Var Mode
+Var AppLanguage
+LoadLanguageFile "${NSISDIR}\Contrib\Language files\English.nlf"
+LoadLanguageFile "${NSISDIR}\Contrib\Language files\Korean.nlf"
+LoadLanguageFile "${NSISDIR}\Contrib\Language files\SimpChinese.nlf"
+!include "languages.nsh"
 Section
+  SetRegView 64
+  StrCpy $LANGUAGE 1033
+  ReadRegStr $0 HKCU "Software\Typecast Studio" "InstallerLanguage"
+  StrCpy $AppLanguage "en"
+  ${If} $0 == 1042
+    StrCpy $LANGUAGE 1042
+    StrCpy $AppLanguage "ko"
+  ${ElseIf} $0 == 2052
+    StrCpy $LANGUAGE 2052
+    StrCpy $AppLanguage "zh-CN"
+  ${EndIf}
   SetOutPath "$EXEDIR"
   ${GetParameters} $Args
   StrCpy $Mode ""
@@ -26,7 +42,7 @@ Section
     Pop $0
     Quit
   ${EndIf}
-  nsExec::ExecToStack '"$EXEDIR\runtime\node.exe" "$EXEDIR\server.mjs" $Mode'
+  nsExec::ExecToStack '"$EXEDIR\runtime\node.exe" "$EXEDIR\server.mjs" $Mode --language=$AppLanguage'
   Pop $0
   Pop $1
   ${If} $0 != 0
@@ -35,7 +51,7 @@ Section
     FileWrite $2 "$1"
     FileClose $2
     ${If} $Mode == ""
-      MessageBox MB_OK|MB_ICONEXCLAMATION "程序无法启动。请先退出旧版本，确认 4318 端口未被占用。$\r$\n$\r$\n详细记录：$LOCALAPPDATA\Typecast Studio\startup-error.log"
+      MessageBox MB_OK|MB_ICONEXCLAMATION "$(LaunchError)"
     ${EndIf}
   ${EndIf}
 SectionEnd

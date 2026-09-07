@@ -39,3 +39,24 @@ test('capture-window validates input and uses user-writable data outside program
  const base=await mkdtemp(path.join(os.tmpdir(),'typecast-capture-')),user=path.join(base,'user-data'),calls=[];const app=await createApplication(base,4318,{dataDir:user,openCapture:async o=>{calls.push(o);return{url:'capture'};}});
  try{assert.equal((await request(app,'/api/capture-window','POST',{key:'blue'})).status,200);assert.equal(calls[0].key,'blue');assert.equal(calls[0].dataDir,user);assert.equal((await request(app,'/api/capture-window','POST',{key:'evil & command'})).status,400);assert.equal(calls.length,1);await request(app,'/api/state','POST',DEFAULT_CONFIG);assert.ok(await readFile(path.join(user,'settings.json')));}finally{app.close();await rm(base,{recursive:true,force:true});}
 });
+
+test('language preference migrates, syncs, persists and never changes user text',async()=>{
+ const base=await mkdtemp(path.join(os.tmpdir(),'typecast-language-'));
+ const {language,...legacy}=DEFAULT_CONFIG;
+ assert.equal(language,'en');assert.equal(validateConfig(legacy).language,'en');
+ assert.throws(()=>validateConfig({...DEFAULT_CONFIG,language:'fr'}));
+ let app=await createApplication(base,4318,{initialLanguage:'ko'});
+ try{
+  assert.equal(JSON.parse((await request(app,'/api/state')).text).config.language,'ko');
+  const text='Hello 안녕하세요 你好, WeChat: unchanged_id';
+  for(const [locale,message] of [['en','Invalid background color.'],['ko','배경색이 올바르지 않습니다.'],['zh-CN','背景颜色无效。']]){
+   const saved=await request(app,'/api/state','POST',{...DEFAULT_CONFIG,language:locale,lines:[text]});
+   assert.equal(JSON.parse(saved.text).config.lines[0],text);
+   const bad=await request(app,'/api/capture-window','POST',{key:'invalid'});
+   assert.equal(JSON.parse(bad.text).error,message);
+   app.close();app=await createApplication(base,4318,{initialLanguage:'en'});
+   const restored=JSON.parse((await request(app,'/api/state')).text).config;
+   assert.equal(restored.language,locale);assert.deepEqual(restored.lines,[text]);
+  }
+ }finally{app.close();await rm(base,{recursive:true,force:true});}
+});

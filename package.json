@@ -1,6 +1,6 @@
 {
   "name": "typecast-studio",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -52,6 +52,7 @@
     "oxfmt": "0.61.0",
     "oxlint": "1.76.0",
     "oxlint-tsgolint": "7.0.2001",
+    "playwright-core": "^1.63.0",
     "tailwindcss": "4.2.1",
     "typescript": "5.9.3",
     "vite": "8.0.13",
@@ -59,5 +60,5 @@
   },
   "type": "module",
   "license": "MIT",
-  "description": "中文直播花字工作室，支持抖音直播伴侣窗口捕获。"
+  "description": "Live text studio with English, Korean and Chinese interfaces, Windows installer, and Douyin window capture."
 }

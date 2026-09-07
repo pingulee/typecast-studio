@@ -13,9 +13,9 @@ const sums=await readFile(path.join(cache,'SHASUMS256.txt'),'utf8'),expected=sum
 await download('https://raw.githubusercontent.com/nodejs/node/v24.19.0/LICENSE',path.join(cache,'NODE-LICENSE.txt'));
 await rm(stage,{recursive:true,force:true});for(const dir of ['runtime','lib','licenses'])await mkdir(path.join(stage,dir),{recursive:true});
 await cp(path.join(root,'web'),path.join(stage,'web'),{recursive:true});
-for(const f of ['config.mjs','styles.mjs','server-core.mjs','capture-window.mjs'])await copyFile(path.join(root,'lib',f),path.join(stage,'lib',f));
+for(const f of ['config.mjs','i18n.mjs','styles.mjs','server-core.mjs','capture-window.mjs'])await copyFile(path.join(root,'lib',f),path.join(stage,'lib',f));
 for(const f of ['server.mjs','control.mjs'])await copyFile(path.join(root,f),path.join(stage,f));
-await copyFile(runtime,path.join(stage,'runtime/node.exe'));await copyFile(path.join(cache,'NODE-LICENSE.txt'),path.join(stage,'licenses/NODE-LICENSE.txt'));await copyFile(path.join(root,'README.md'),path.join(stage,'使用说明.txt'));
+await copyFile(runtime,path.join(stage,'runtime/node.exe'));await copyFile(path.join(cache,'NODE-LICENSE.txt'),path.join(stage,'licenses/NODE-LICENSE.txt'));for(const [lang,source] of [['en','README.md'],['ko','docs/README.ko.md'],['zh-CN','docs/README.zh-CN.md']])await copyFile(path.join(root,source),path.join(stage,`User-Guide-${lang}.txt`));
 const seen=new Set(),notices=[];
 async function collect(name){if(seen.has(name))return;seen.add(name);const dir=path.join(root,'node_modules',name);let meta;try{meta=JSON.parse(await readFile(path.join(dir,'package.json'),'utf8'));}catch{return;}let text='';for(const f of await readdir(dir))if(/^(license|licence|copying)/i.test(f))try{text+='\n'+await readFile(path.join(dir,f),'utf8');}catch{}notices.push(`${name} ${meta.version}\nLicense: ${meta.license}\n${text}`);for(const dep of Object.keys(meta.dependencies||{}))await collect(dep);}
 for(const name of ['react','react-dom','@base-ui/react','lucide-react','clsx','class-variance-authority','tailwind-merge','gifenc'])await collect(name);
@@ -24,6 +24,6 @@ await copyFile(path.join(root,'public/fonts/OFL.txt'),path.join(stage,'licenses/
 const compiler=process.env.MAKENSIS||'makensis',flag=process.platform==='win32'?'/':'-',icon=path.join(root,'installer/app.ico');
 function compile(file,defines){const args=[`${flag}V2`,...Object.entries(defines).map(([k,v])=>`${flag}D${k}=${v}`),file],r=spawnSync(compiler,args,{stdio:'inherit'});if(r.error)throw r.error;if(r.status!==0)throw new Error(`NSIS failed: ${file}`);}
 compile('installer/launcher.nsi',{OUTPUT:path.join(stage,'TypecastStudio.exe'),ICON:icon});
-const target=path.join(dist,'Typecast-Studio-Setup-1.0.0.exe');compile('installer/setup.nsi',{OUTPUT:target,PAYLOAD:stage,ICON:icon});
+const target=path.join(dist,'Typecast-Studio-Setup-1.1.0.exe');compile('installer/setup.nsi',{OUTPUT:target,PAYLOAD:stage,ICON:icon});
 await writeFile(path.join(dist,'SHA256SUMS.txt'),createHash('sha256').update(await readFile(target)).digest('hex')+'  '+path.basename(target)+'\n');
-await copyFile('README.md',path.join(dist,'使用说明.txt'));console.log('Installer ready:',target);
+for(const lang of ['en','ko','zh-CN'])await copyFile(path.join(stage,`User-Guide-${lang}.txt`),path.join(dist,`User-Guide-${lang}.txt`));console.log('Installer ready:',target);
