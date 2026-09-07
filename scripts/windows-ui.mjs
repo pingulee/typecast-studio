@@ -21,6 +21,8 @@ try{
   await output.goto('http://localhost:4318/capture?key=green');
   await output.waitForFunction(prefix=>document.title.startsWith(prefix),title);
   await page.evaluate(()=>document.fonts.ready);
+  const clipped=await page.locator('.style-tile b').evaluateAll(nodes=>nodes.filter(n=>n.scrollWidth>n.parentElement.clientWidth-8).map(n=>n.textContent));
+  assert.deepEqual(clipped,[],language+' overflowing design sample');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,language+' horizontal overflow');
   await mkdir('work/ui',{recursive:true});
   await page.screenshot({path:`work/ui/editor-${language}.png`,fullPage:true});
