@@ -7,6 +7,12 @@ const lattice=new Float32Array(128*128);
 let seed=71571;for(let i=0;i<lattice.length;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;lattice[i]=seed/4294967295;}
 function noise(x:number,y:number){const ix=Math.floor(x),iy=Math.floor(y);let fx=x-ix,fy=y-iy;fx=fx*fx*(3-2*fx);fy=fy*fy*(3-2*fy);const a=lattice[(iy&127)*128+(ix&127)],b=lattice[(iy&127)*128+((ix+1)&127)],d=lattice[((iy+1)&127)*128+(ix&127)],e=lattice[((iy+1)&127)*128+((ix+1)&127)];return(a+(b-a)*fx)*(1-fy)+(d+(e-d)*fx)*fy;}
 function turbulence(x:number,y:number){return noise(x,y)*.57+noise(x*2.03+31,y*2.03)*.29+noise(x*4.07,y*4.07+17)*.14;}
+// Two upward-moving noise fields crossfade with zero endpoint velocity.
+// Unlike a circular noise offset, neither stream reverses its direction.
+function risingNoise(x:number,y:number,cycle:number){
+ const p=cycle-Math.floor(cycle),blend=p*p*p*(p*(p*6-15)+10);
+ return turbulence(x,y+p*12)*(1-blend)+turbulence(x,y+(p-1)*12)*blend;
+}
 function surface(w:number,h:number){const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
 function tint(layer:HTMLCanvasElement,color:string){const s=surface(layer.width,layer.height),c=s.getContext('2d')!;c.drawImage(layer,0,0);c.globalCompositeOperation='source-in';c.fillStyle=color;c.fillRect(0,0,s.width,s.height);return s;}
 export function prepareEffect(layer:HTMLCanvasElement,b:Bounds,color:string):EffectAssets{
@@ -27,24 +33,31 @@ function shimmer(c:CanvasRenderingContext2D,a:EffectAssets,b:Bounds,phase:number
  const x=(b.x-100+(b.width+200)*phase)/a.scale,beam=ctx.createLinearGradient(x-38,0,x+38,h/a.scale);beam.addColorStop(0,'#ffffff00');beam.addColorStop(.45,'#ffffff00');beam.addColorStop(.5,`rgba(255,255,255,${strength})`);beam.addColorStop(.55,'#ffffff00');beam.addColorStop(1,'#ffffff00');ctx.fillStyle=beam;ctx.fillRect(0,0,a.fire.width,a.fire.height);ctx.globalCompositeOperation='source-over';c.drawImage(a.fire,0,0,w,h);
 }
 function drawFire(c:CanvasRenderingContext2D,layer:HTMLCanvasElement,a:EffectAssets,b:Bounds,cycle:number){
- const w=a.fire.width,h=a.fire.height,data=a.pixels.data,t=cycle*TAU,ox=Math.cos(t)*3.8,oy=Math.sin(t)*3.8;
+ const w=a.fire.width,h=a.fire.height,data=a.pixels.data,t=cycle*TAU;
  data.fill(0);
- for(let x=Math.max(1,Math.floor(b.x/2)-12);x<Math.min(w-1,(b.x+b.width)/2+12);x++){
-  for(let y=Math.max(1,Math.floor(b.top/2)-25);y<Math.min(h-1,b.bottom/2+2);y++){
-   const n=turbulence(x*.075+ox,y*.12+oy),warp=(n-.5)*16+Math.sin(y*.21+t*2)*2;
-   const sx=Math.max(0,Math.min(w-1,Math.round(x+warp))),root=Math.min(a.tops[sx],a.tops[Math.max(0,sx-1)]+1,a.tops[Math.min(w-1,sx+1)]+1);
-   const rise=root-y;if(rise < -2||rise>24||root>h)continue;
-   const f=turbulence(x*.1+ox*1.4,y*.19+oy*1.4),height=8+18*f,fade=Math.max(0,1-rise/height);
-   const density=Math.max(0,Math.min(1,(fade-(1-n)*.53)*2.6));if(!density)continue;
-   const heat=Math.max(0,Math.min(1,fade*.76+density*.2)),p=(y*w+x)*4;
-   data[p]=255;data[p+1]=Math.round(36+195*heat**1.7);data[p+2]=Math.round(7+132*heat**4);data[p+3]=Math.round(density*Math.min(1,(rise+3)/3)*235);
+ for(let x=Math.max(1,Math.floor(b.x/2)-3);x<Math.min(w-1,(b.x+b.width)/2+3);x++){
+  // Keep the emitter attached to the glyph. Moving the sampled column made
+  // whole flame sections pop between disconnected strokes and empty spaces.
+  let root=0,weight=0;
+  for(let k=-2;k<=2;k++){const top=a.tops[Math.max(0,Math.min(w-1,x+k))],v=3-Math.abs(k);if(top<h){root+=top*v;weight+=v;}}
+  if(!weight)continue;root/=weight;
+  for(let y=Math.max(1,Math.floor(root)-25);y<Math.min(h-1,root+3);y++){
+   const rise=root-y;if(rise < -2)continue;
+   const bend=(risingNoise(x*.04, y*.045,cycle)-.5)*2.2;
+   const n=risingNoise(x*.19+bend,y*.04,cycle);
+   const envelope=Math.max(0,1-Math.max(0,rise)/25);
+   const density=Math.max(0,Math.min(1,(n*.9+envelope*.6-.75)*3));
+   const opacity=density*density*(3-2*density)*Math.min(1,(rise+3)/4)*Math.min(1,weight/9);
+   if(opacity<=0)continue;
+   const heat=Math.max(0,Math.min(1,envelope*.9+density*.1)),p=(y*w+x)*4;
+   data[p]=255;data[p+1]=Math.round(45+184*heat**1.9);data[p+2]=Math.round(5+100*heat**5);data[p+3]=Math.round(opacity*210);
   }
  }
  a.fire.getContext('2d')!.putImageData(a.pixels,0,0);
- c.save();c.shadowColor='#ff4d12';c.shadowBlur=10;c.drawImage(a.fire,0,0,layer.width,layer.height);c.shadowBlur=0;
+ c.save();c.shadowColor='#ff4d12';c.shadowBlur=6;c.drawImage(a.fire,0,0,layer.width,layer.height);c.shadowBlur=0;
  // Embers detach from actual glyph columns, never from a rectangular emitter.
- for(let i=0;i<28;i++){const p=(cycle*2+i*.618)%1,x=b.x+(i*.754877%1)*b.width,col=Math.round(x/2),root=a.tops[col];if(root>h)continue;const y=root*2-p*43,drift=Math.sin(t+i)*7;const size=1.3+(i%3)*.5;c.globalAlpha=Math.sin(p*Math.PI)*.8;c.fillStyle=i%3?'#ffbc56':'#fff6d3';c.beginPath();c.ellipse(x+drift,y,size*.6,size*1.8,-.3,0,TAU);c.fill();}
- c.restore();c.drawImage(layer,0,0);shimmer(c,a,b,cycle%1,.22);
+ for(let i=0;i<16;i++){const p=(cycle*2+i*.618)%1,x=b.x+(i*.754877%1)*b.width,col=Math.round(x/2),root=a.tops[col];if(root>h)continue;const y=root*2-p*43,drift=Math.sin(t+i)*7;const size=1.3+(i%3)*.5;c.globalAlpha=Math.sin(p*Math.PI)**2*.5;c.fillStyle=i%3?'#ffbc56':'#fff6d3';c.beginPath();c.ellipse(x+drift,y,size*.6,size*1.8,-.3,0,TAU);c.fill();}
+ c.restore();c.drawImage(layer,0,0);
 }
 function drawWave(c:CanvasRenderingContext2D,layer:HTMLCanvasElement,a:EffectAssets,b:Bounds,t:number){
  // Refract the actual text, not decorative sine lines placed behind it.

@@ -8,7 +8,7 @@ export async function exportAnimation(config:Config,type:'gif'|'webp',progress:(
  const stay=layers.length===1&&config.singleMode!=='loop',dynamic=['pulse','marquee'].includes(config.animation)||(config.effect&&config.effect!=='none'),once=stay&&!dynamic;
  for(let i=0;i<layers.length;i++){
   const base=i*span,steps=Math.max(1,Math.round(transition*20)),step=transition/steps;
-  if(dynamic){const n=Math.round(span*20);for(let k=0;k<n;k++)frames.push({time:base+(k+.5)*span/n,duration:span/n*1000});continue;}
+  if(dynamic){const n=Math.max(1,Math.round(span*(type==='gif'?25:30)));for(let k=0;k<n;k++)frames.push({time:base+(k+.5)*span/n,duration:span/n*1000});continue;}
   if(transition)for(let n=0;n<steps;n++)frames.push({time:base+(n+.5)*step,duration:step*1000});
   frames.push({time:base+transition+.001,duration:config.hold*1000});
   if(transition&&!stay)for(let n=0;n<steps;n++)frames.push({time:base+transition+config.hold+(n+.5)*step,duration:step*1000});
