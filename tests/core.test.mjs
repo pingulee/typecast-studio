@@ -47,3 +47,17 @@ test('Chinese single-entry defaults migrate old languages and disable old highli
   assert.equal(c.language,'zh-CN');assert.equal(c.highlight,false);assert.deepEqual(c.lines,['微信：unchanged']);
  }
 });
+
+test('update controls require local JSON requests and do not accept external installer URLs',async()=>{
+ const base=await mkdtemp(path.join(os.tmpdir(),'typecast-update-api-'));let installs=0,checks=0;
+ const updater={snapshot:()=>({phase:'ready',current:'1.4.0'}),check:async()=>{checks++;},install:async()=>{installs++;return{phase:'installing'};}};
+ const app=await createApplication(base,4318,{updater});
+ try{
+  assert.equal((await request(app,'/api/update')).status,200);
+  assert.equal((await request(app,'/api/update/install','POST',{}, {origin:'https://evil.example'})).status,403);
+  assert.equal((await request(app,'/api/update/install','POST',{}, {'content-type':'text/plain'})).status,415);
+  assert.equal(installs,0);
+  assert.equal((await request(app,'/api/update/check','POST',{})).status,202);assert.equal(checks,1);
+  assert.equal((await request(app,'/api/update/install','POST',{})).status,200);assert.equal(installs,1);
+ }finally{app.close();await rm(base,{recursive:true,force:true});}
+});

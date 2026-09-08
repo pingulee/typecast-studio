@@ -2,7 +2,8 @@ Unicode true
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 !include "x64.nsh"
-Name "Typecast Studio 1.3.1"
+!include "FileFunc.nsh"
+Name "Typecast Studio 1.4.0"
 OutFile "${OUTPUT}"
 InstallDir "$PROGRAMFILES64\Typecast Studio"
 InstallDirRegKey HKLM "Software\Typecast Studio" "InstallDir"
@@ -12,10 +13,10 @@ SetCompressorDictSize 32
 BrandingText "Typecast Studio"
 Icon "${ICON}"
 UninstallIcon "${ICON}"
-VIProductVersion "1.3.1.0"
+VIProductVersion "1.4.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "Typecast Studio"
 VIAddVersionKey /LANG=1033 "FileDescription" "Typecast Studio Installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "1.3.1.0"
+VIAddVersionKey /LANG=1033 "FileVersion" "1.4.0.0"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2026 Typecast Studio contributors"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "Welcome to Typecast Studio"
@@ -34,6 +35,17 @@ Function .onInit
   SetRegView 64
   SetShellVarContext current
   StrCpy $LANGUAGE 1033
+  ${GetParameters} $0
+  ClearErrors
+  ${GetOptions} $0 "/UPDATE" $1
+  ${IfNot} ${Errors}
+    ReadRegStr $2 HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "TypecastStudio"
+    ${If} $2 == ""
+      SectionSetFlags 1 0
+    ${EndIf}
+    IfFileExists "$DESKTOP\Typecast Studio.lnk" +2 0
+      SectionSetFlags 2 0
+  ${EndIf}
   ${IfNot} ${RunningX64}
     MessageBox MB_OK|MB_ICONSTOP "This version requires 64-bit Windows."
     Abort
@@ -50,7 +62,7 @@ Section "Program files (required)" Core
   File /r "${PAYLOAD}\*.*"
   WriteRegStr HKLM "Software\Typecast Studio" "InstallDir" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayName" "Typecast Studio"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayVersion" "1.3.1"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayVersion" "1.4.0"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "Publisher" "Typecast Studio contributors"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayIcon" "$INSTDIR\TypecastStudio.exe"
@@ -92,6 +104,7 @@ Section "Uninstall"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio"
   DeleteRegKey HKLM "Software\Typecast Studio"
   Delete "$INSTDIR\TypecastStudio.exe"
+  Delete "$INSTDIR\TypecastUpdate.exe"
   Delete "$INSTDIR\server.mjs"
   Delete "$INSTDIR\control.mjs"
   Delete "$INSTDIR\使用说明.txt"

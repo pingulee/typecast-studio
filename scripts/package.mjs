@@ -13,7 +13,7 @@ const sums=await readFile(path.join(cache,'SHASUMS256.txt'),'utf8'),expected=sum
 await download('https://raw.githubusercontent.com/nodejs/node/v24.19.0/LICENSE',path.join(cache,'NODE-LICENSE.txt'));
 await rm(stage,{recursive:true,force:true});for(const dir of ['runtime','lib','licenses'])await mkdir(path.join(stage,dir),{recursive:true});
 await cp(path.join(root,'web'),path.join(stage,'web'),{recursive:true});
-for(const f of ['config.mjs','i18n.mjs','styles.mjs','server-core.mjs','capture-window.mjs'])await copyFile(path.join(root,'lib',f),path.join(stage,'lib',f));
+for(const f of ['version.mjs','updater.mjs','config.mjs','i18n.mjs','styles.mjs','server-core.mjs','capture-window.mjs'])await copyFile(path.join(root,'lib',f),path.join(stage,'lib',f));
 for(const f of ['server.mjs','control.mjs'])await copyFile(path.join(root,f),path.join(stage,f));
 await copyFile(runtime,path.join(stage,'runtime/node.exe'));await copyFile(path.join(cache,'NODE-LICENSE.txt'),path.join(stage,'licenses/NODE-LICENSE.txt'));for(const [lang,source] of [['en','README.md'],['zh-CN','docs/README.zh-CN.md']])await copyFile(path.join(root,source),path.join(stage,`User-Guide-${lang}.txt`));
 const seen=new Set(),notices=[];
@@ -27,6 +27,8 @@ if(process.platform!=='win32')throw new Error('Build the Windows tray host on Wi
 const csc=process.env.CSC||path.join(process.env.WINDIR||'C:/Windows','Microsoft.NET/Framework64/v4.0.30319/csc.exe');
 const tray=spawnSync(csc,['/nologo','/target:winexe','/platform:anycpu','/optimize+','/reference:System.Windows.Forms.dll','/reference:System.Drawing.dll',`/win32icon:${icon}`,`/out:${path.join(stage,'TypecastStudio.exe')}`,path.join(root,'native','TrayHost.cs')],{stdio:'inherit'});
 if(tray.error)throw tray.error;if(tray.status!==0)throw new Error('Tray host compilation failed');
-const target=path.join(dist,'Typecast-Studio-Setup-1.3.1.exe');compile('installer/setup.nsi',{OUTPUT:target,PAYLOAD:stage,ICON:icon});
+const update=spawnSync(csc,['/nologo','/target:winexe','/platform:anycpu','/optimize+','/reference:System.Windows.Forms.dll',`/out:${path.join(stage,'TypecastUpdate.exe')}`,path.join(root,'native','UpdateHost.cs')],{stdio:'inherit'});
+if(update.error)throw update.error;if(update.status!==0)throw new Error('Update helper compilation failed');
+const target=path.join(dist,'Typecast-Studio-Setup-1.4.0.exe');compile('installer/setup.nsi',{OUTPUT:target,PAYLOAD:stage,ICON:icon});
 await writeFile(path.join(dist,'SHA256SUMS.txt'),createHash('sha256').update(await readFile(target)).digest('hex')+'  '+path.basename(target)+'\n');
 for(const lang of ['en','zh-CN'])await copyFile(path.join(stage,`User-Guide-${lang}.txt`),path.join(dist,`User-Guide-${lang}.txt`));console.log('Installer ready:',target);

@@ -54,7 +54,8 @@ namespace TypecastStudio {
         private readonly Process server;
         private readonly Icon icon;
         private bool stopping, ready, disposed;
-        private int attempts;
+        private int attempts, updateTicks;
+        private string notifiedVersion;
         private readonly bool openOnReady;
         internal TrayContext(bool background) {
             openOnReady = !background;
@@ -64,7 +65,7 @@ namespace TypecastStudio {
             var editorItem = new ToolStripMenuItem("Open editor", null, (s,e) => OpenEditor());
             var outputItem = new ToolStripMenuItem("Open output window", null, (s,e) => OpenOutput());
             QuitItem = new ToolStripMenuItem("Quit", null, (s,e) => Stop());
-            menu.Items.Add(editorItem); menu.Items.Add(outputItem); menu.Items.Add(new ToolStripSeparator()); menu.Items.Add(QuitItem);
+            menu.Items.Add(editorItem); menu.Items.Add(outputItem); menu.Items.Add(new ToolStripMenuItem("Check for updates", null, (s,e) => { try { Request("/api/update/check", "{}"); } catch {} OpenEditor(); })); menu.Items.Add(new ToolStripSeparator()); menu.Items.Add(QuitItem);
             icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath) ?? SystemIcons.Application;
             Tray = new NotifyIcon { Text = "Typecast Studio", Icon = icon, ContextMenuStrip = menu, Visible = true };
             Tray.DoubleClick += (s,e) => OpenEditor();
@@ -89,7 +90,19 @@ namespace TypecastStudio {
         private void Tick() {
             if (stopping) return;
             if (ready && server.HasExited) { Stop(); return; }
-            if (ready) return;
+            if (ready) {
+                if (++updateTicks % 30 == 0) try {
+                    var status = Request("/api/update", null);
+                    if (status.Contains("\"phase\":\"ready\"")) {
+                        var match = System.Text.RegularExpressions.Regex.Match(status, "\"version\":\"([^\"]+)\"");
+                        if (match.Success && match.Groups[1].Value != notifiedVersion) {
+                            notifiedVersion = match.Groups[1].Value;
+                            Tray.ShowBalloonTip(6000, "Typecast Studio update", "Version " + notifiedVersion + " is ready. Open the editor to install after your stream.", ToolTipIcon.Info);
+                        }
+                    }
+                } catch {}
+                return;
+            }
             attempts++;
             try {
                 if (Request("/api/health", null).Contains("\"app\":\"typecast-studio\"")) {

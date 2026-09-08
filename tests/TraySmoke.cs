@@ -20,7 +20,7 @@ class TraySmoke {
    try {
     ticks++;
     if(ticks<5)return;
-    if(!tray.Visible||tray.Icon==null||tray.ContextMenuStrip.Items.Count!=4)throw new Exception("Tray icon or menu missing");
+    if(!tray.Visible||tray.Icon==null||tray.ContextMenuStrip.Items.Count!=5)throw new Exception("Tray icon or menu missing");
     if(tray.ContextMenuStrip.Items[0].Text!="Open editor"||quit.Text!="Quit")throw new Exception("Unexpected tray menu");
     if(ticks==5){tray.ContextMenuStrip.Show(new Point(60,60));return;}
     try {

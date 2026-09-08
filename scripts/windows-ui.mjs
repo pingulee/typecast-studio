@@ -11,6 +11,9 @@ try{
  assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN');
  assert.equal(await page.locator('.language-picker').count(),0);
  await page.getByRole('heading',{name:'直播文案',exact:true}).waitFor();
+ await page.locator('.update-control').waitFor();
+ assert.match(await page.locator('.update-control').innerText(),/v1\.4\.0/);
+ assert.ok(['idle','checking','latest','error'].includes((await(await page.request.get('http://localhost:4318/api/update')).json()).phase));
  assert.equal(await page.locator('.line-input').count(),1);
  const sentence='欢迎来到直播间，微信：your_wechat';
  await page.locator('.line-input').first().fill(sentence);
@@ -56,6 +59,11 @@ try{
  await mkdir('work/ui',{recursive:true});
  await page.screenshot({path:'work/ui/editor-zh-CN.png',fullPage:true});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.route('**/api/update',route=>route.fulfill({json:{current:'1.4.0',phase:'ready',version:'1.4.1',progress:100}}));
+ await page.getByRole('button',{name:'安装并重启',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight>innerHeight),false,'Update ready must still fit one screen');
+ await page.screenshot({path:'work/ui/update-ready.png',fullPage:true});
+ await page.unroute('**/api/update');
  await page.setViewportSize({width:760,height:1040});
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
  await page.getByRole('button',{name:'退出程序',exact:true}).click();

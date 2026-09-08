@@ -6,9 +6,12 @@ import { type Config,buildLayers,drawFrame,loadFont } from '../lib/render';
 import { canvasBlob,downloadBlob,exportAnimation } from '../lib/export';
 import { translate } from '../lib/i18n.mjs';
 import Preview from './preview';
+import UpdateControl from './update-control';
+import { useVersionReload } from './version-reload';
 export default function Studio(){
  const [config,setConfig]=useState<Config>(structuredClone(DEFAULT_CONFIG)),[loaded,setLoaded]=useState(false),[connected,setConnected]=useState(false),[status,setStatus]=useState('loading'),[error,setError]=useState(''),[paused,setPaused]=useState(false),[active,setActive]=useState(0),[copied,setCopied]=useState(false),[busy,setBusy]=useState(''),[progress,setProgress]=useState(0),[notice,setNotice]=useState(''),[opening,setOpening]=useState(false),[exited,setExited]=useState(false),[quitting,setQuitting]=useState(false);
  const pending=useRef<Config|null>(null),saving=useRef(false),timer=useRef<ReturnType<typeof setTimeout>|null>(null),exportAbort=useRef<AbortController|null>(null),latest=useRef(config);
+ useVersionReload(!exited);
  const t=(key:string)=>translate(key,'zh-CN');
  useEffect(()=>{document.documentElement.lang='zh-CN';document.title='Typecast Studio';},[config.language]);
  const link=location.origin+'/overlay';
@@ -46,6 +49,6 @@ export default function Studio(){
     {busy&&<div className="export-progress"><progress max={100} value={progress}/><span>{progress}%</span><button onClick={()=>exportAbort.current?.abort()}>{t('取消')}</button></div>}
    </section>
   </div><output className={'save-status '+(status==='error'?'error':'')}>{status==='error'?<><span>{t(error)}</span><button onClick={flush}>{t('重试')}</button></>:<><i/>{!connected?t('正在连接后台。请从开始菜单运行“直播花字工作室”。'):status==='synced'?t('自动保存，实时更新。'):t('正在保存并同步字幕…')}</>}</output>
-  </>}</main><footer>{t('从任务栏托盘图标打开或退出程序。')}</footer>{notice&&<output className="toast">{notice}</output>}
+  </>}</main><footer>{!exited&&<UpdateControl beforeInstall={async()=>{await flush();if(pending.current||saving.current){setNotice('设置尚未保存，请稍后再试。');return false;}return true;}}/>}{t('从任务栏托盘图标打开或退出程序。')}</footer>{notice&&<output className="toast">{notice}</output>}
  </div>;
 }

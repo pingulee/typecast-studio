@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true') { throw 'Disposable Windows CI only.' }
 $dataDir = Join-Path $env:LOCALAPPDATA 'Typecast Studio'
 if (Test-Path $dataDir) { Remove-Item $dataDir -Recurse -Force }
-$installer = Join-Path $PWD 'dist\Typecast-Studio-Setup-1.3.1.exe'
+$installer = Join-Path $PWD 'dist\Typecast-Studio-Setup-1.4.0.exe'
 $installDir = Join-Path $env:ProgramFiles 'Typecast Studio'
 New-Item -ItemType Directory -Path 'work/ui' -Force | Out-Null
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -14,7 +14,7 @@ $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
 if ($install.ExitCode -ne 0) { throw 'Installer failed' }
 $startup = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run').TypecastStudio
 if ($startup -notlike '*TypecastStudio.exe*--background*') { throw 'Startup registration missing' }
-foreach ($name in @('TypecastStudio.exe','runtime\node.exe','User-Guide-zh-CN.txt')) {
+foreach ($name in @('TypecastStudio.exe','TypecastUpdate.exe','runtime\node.exe','User-Guide-zh-CN.txt')) {
  if (!(Test-Path "$installDir\$name")) { throw "Missing installed file: $name" }
 }
 New-Item -ItemType Directory -Path 'work/ui' -Force | Out-Null
@@ -46,6 +46,18 @@ $stop = Start-Process -FilePath "$installDir\TypecastStudio.exe" -ArgumentList '
 if (!$hostProcess.WaitForExit(8000)) { throw 'Tray Quit command left the process running' }
 $hostProcess = Start-Process -FilePath "$installDir\TypecastStudio.exe" -ArgumentList '--background' -PassThru
 $null = Wait-Ready
+# An automatic upgrade must preserve opting out of startup and desktop shortcuts.
+Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name TypecastStudio
+Remove-Item (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Typecast Studio.lnk') -ErrorAction SilentlyContinue
+node scripts/windows-update-smoke.mjs
+if ($LASTEXITCODE -ne 0) { throw 'Update staging failed' }
+if (!$hostProcess.WaitForExit(30000)) { throw 'Updater did not stop old host' }
+$updated = Wait-Ready
+if ($updated.config.lines[0] -notmatch 'your_wechat') { throw 'Upgrade lost saved text' }
+$afterUpdate = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+if ($afterUpdate.TypecastStudio) { throw 'Update re-enabled disabled startup' }
+if (Test-Path (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Typecast Studio.lnk')) { throw 'Update recreated removed desktop shortcut' }
+Write-Host 'PASS: native updater installed, restarted the tray service and preserved text and startup preferences.'
 $uninstall = Start-Process -FilePath "$installDir\Uninstall.exe" -ArgumentList '/S' -Wait -PassThru
 Start-Sleep -Seconds 4
 if (Test-Path "$installDir\TypecastStudio.exe") { throw 'Uninstaller left the launcher behind' }

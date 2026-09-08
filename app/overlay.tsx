@@ -1,8 +1,10 @@
 import { useEffect,useState } from 'react';
 import { translate } from '../lib/i18n.mjs';
 import Preview from './preview';
+import { useVersionReload } from './version-reload';
 import type { Config } from '../lib/render';
 export default function Overlay(){
+ useVersionReload();
  const [config,setConfig]=useState<Config|null>(null),[revision,setRevision]=useState(0);
  const capture=location.pathname.startsWith('/capture');
  useEffect(()=>{const events=new EventSource('/api/events');events.onmessage=e=>{try{const s=JSON.parse(e.data);setConfig(s.config);setRevision(s.revision);}catch{}};return()=>events.close();},[capture]);
