@@ -4,6 +4,12 @@ $dataDir = Join-Path $env:LOCALAPPDATA 'Typecast Studio'
 if (Test-Path $dataDir) { Remove-Item $dataDir -Recurse -Force }
 $installer = Join-Path $PWD 'dist\Typecast-Studio-Setup-1.2.0.exe'
 $installDir = Join-Path $env:ProgramFiles 'Typecast Studio'
+New-Item -ItemType Directory -Path 'work/ui' -Force | Out-Null
+$csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+& $csc /nologo /target:exe /reference:System.Drawing.dll "/out:$PWD\work\InstallerSmoke.exe" (Join-Path $PWD 'tests\InstallerSmoke.cs')
+if ($LASTEXITCODE -ne 0) { throw 'Installer test compilation failed' }
+& "$PWD\work\InstallerSmoke.exe" $installer "$PWD\work\ui\installer-welcome.png"
+if ($LASTEXITCODE -ne 0) { throw 'English welcome screen test failed' }
 $install = Start-Process -FilePath $installer -ArgumentList '/S' -Wait -PassThru
 if ($install.ExitCode -ne 0) { throw 'Installer failed' }
 $startup = (Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run').TypecastStudio
