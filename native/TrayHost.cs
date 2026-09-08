@@ -53,7 +53,7 @@ namespace TypecastStudio {
         private readonly RegisteredWaitHandle stopWait;
         private readonly Process server;
         private readonly Icon icon;
-        private bool stopping, ready;
+        private bool stopping, ready, disposed;
         private int attempts;
         private readonly bool openOnReady;
         internal TrayContext(bool background) {
@@ -118,7 +118,8 @@ namespace TypecastStudio {
             ExitThread();
         }
         protected override void Dispose(bool disposing) {
-            if (disposing) {
+            if (disposing && !disposed) {
+                disposed = true;
                 timer.Dispose();stopWait.Unregister(null);stopSignal.Dispose();
                 Tray.Visible = false;Tray.ContextMenuStrip.Dispose();Tray.Dispose();icon.Dispose();dispatcher.Dispose();server.Dispose();
             }
