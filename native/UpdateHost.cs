@@ -6,6 +6,7 @@ using System.Threading;
 using System.Windows.Forms;
 
 internal static class UpdateHost {
+ private static void Log(Exception error) { try { File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"update-error.log"),error.ToString()); } catch {} }
  [STAThread] private static int Main(string[] args) {
   if(args.Length!=3)return 2;
   try {
@@ -26,9 +27,9 @@ internal static class UpdateHost {
    return 0;
   } catch(System.ComponentModel.Win32Exception error) {
    if(error.NativeErrorCode==1223)return 3;
-   MessageBox.Show("Update could not start. Please try again.\n\n"+error.Message,"Typecast Studio",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;
+   Log(error);MessageBox.Show("Update could not start. Please try again.\n\n"+error.Message,"Typecast Studio",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;
   } catch(Exception error) {
-   MessageBox.Show("Update failed. Your saved text is unchanged.\n\n"+error.Message,"Typecast Studio",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;
+   Log(error);MessageBox.Show("Update failed. Your saved text is unchanged.\n\n"+error.Message,"Typecast Studio",MessageBoxButtons.OK,MessageBoxIcon.Error);return 1;
   }
  }
 }

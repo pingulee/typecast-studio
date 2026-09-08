@@ -51,7 +51,7 @@ Remove-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run' -Name 
 Remove-Item (Join-Path ([Environment]::GetFolderPath('Desktop')) 'Typecast Studio.lnk') -ErrorAction SilentlyContinue
 node scripts/windows-update-smoke.mjs
 if ($LASTEXITCODE -ne 0) { throw 'Update staging failed' }
-if (!$hostProcess.WaitForExit(30000)) { throw 'Updater did not stop old host' }
+if (!$hostProcess.WaitForExit(30000)) { Get-Content "$dataDir\updates\update-error.log" -ErrorAction SilentlyContinue; throw 'Updater did not stop old host' }
 $updated = Wait-Ready
 if ($updated.config.lines[0] -notmatch 'your_wechat') { throw 'Upgrade lost saved text' }
 $afterUpdate = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
