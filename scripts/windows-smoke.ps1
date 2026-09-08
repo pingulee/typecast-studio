@@ -13,7 +13,7 @@ foreach ($name in @('TypecastStudio.exe','runtime\node.exe','User-Guide-zh-CN.tx
 }
 New-Item -ItemType Directory -Path 'work/ui' -Force | Out-Null
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
-& $csc /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "/out:$installDir\TraySmoke.exe" tests/TraySmoke.cs
+& $csc /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll "/out:$installDir\TraySmoke.exe" (Join-Path $PWD "tests\TraySmoke.cs")
 if ($LASTEXITCODE -ne 0) { throw 'Tray test compilation failed' }
 & "$installDir\TraySmoke.exe" "$installDir\TypecastStudio.exe" "$PWD\work\ui\tray-menu.png"
 if ($LASTEXITCODE -ne 0) { throw 'Windows tray test failed' }

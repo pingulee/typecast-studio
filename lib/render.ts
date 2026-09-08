@@ -36,7 +36,7 @@ export function drawFrame(canvas:HTMLCanvasElement,config:Config,layers:HTMLCanv
   c.restore();
  }
  if(config.effect==='depth'){
-  const dx=Math.sin(seconds*1.7)*6,dy=3+Math.cos(seconds*1.7)*3;
+  const angle=seconds/(config.hold+(config.animation==='cut'?0:2*config.transition))*Math.PI*2,dx=Math.sin(angle)*6,dy=3+Math.cos(angle)*3;
   c.save();c.globalAlpha*=.15;
   for(let k=7;k>0;k--)c.drawImage(layer,-canvas.width/2+dx*k/3,-canvas.height/2+dy*k/3);
   c.restore();

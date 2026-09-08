@@ -16,7 +16,7 @@ export async function exportAnimation(config:Config,type:'gif'|'webp',progress:(
  const gif=type==='gif'?GIFEncoder():null,webp:{bytes:Uint8Array;duration:number}[]=[];
  for(let i=0;i<frames.length;i++){
   if(signal.aborted)throw new DOMException('已取消。','AbortError');
-  const frame=frames[i];drawFrame(canvas,config,layers,frame.time);
+  const frame=frames[i];drawFrame(canvas,config,layers,frame.time+(stay&&dynamic?span:0));
   if(gif){const c=canvas.getContext('2d')!,data=c.getImageData(0,0,canvas.width,canvas.height).data;
    // A reserved palette entry prevents transparent pixels sharing an opaque color.
    for(let p=0;p<data.length;p+=4)if(data[p+3]<128){data[p]=0;data[p+1]=0;data[p+2]=0;}
