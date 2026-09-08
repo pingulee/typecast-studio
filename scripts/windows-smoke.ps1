@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true') { throw 'Disposable Windows CI only.' }
 $dataDir = Join-Path $env:LOCALAPPDATA 'Typecast Studio'
 if (Test-Path $dataDir) { Remove-Item $dataDir -Recurse -Force }
-$installer = Join-Path $PWD 'dist\Typecast-Studio-Setup-1.2.0.exe'
+$installer = Join-Path $PWD 'dist\Typecast-Studio-Setup-1.3.0.exe'
 $installDir = Join-Path $env:ProgramFiles 'Typecast Studio'
 New-Item -ItemType Directory -Path 'work/ui' -Force | Out-Null
 $csc = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'

@@ -27,6 +27,6 @@ if(process.platform!=='win32')throw new Error('Build the Windows tray host on Wi
 const csc=process.env.CSC||path.join(process.env.WINDIR||'C:/Windows','Microsoft.NET/Framework64/v4.0.30319/csc.exe');
 const tray=spawnSync(csc,['/nologo','/target:winexe','/platform:anycpu','/optimize+','/reference:System.Windows.Forms.dll','/reference:System.Drawing.dll',`/win32icon:${icon}`,`/out:${path.join(stage,'TypecastStudio.exe')}`,path.join(root,'native','TrayHost.cs')],{stdio:'inherit'});
 if(tray.error)throw tray.error;if(tray.status!==0)throw new Error('Tray host compilation failed');
-const target=path.join(dist,'Typecast-Studio-Setup-1.2.0.exe');compile('installer/setup.nsi',{OUTPUT:target,PAYLOAD:stage,ICON:icon});
+const target=path.join(dist,'Typecast-Studio-Setup-1.3.0.exe');compile('installer/setup.nsi',{OUTPUT:target,PAYLOAD:stage,ICON:icon});
 await writeFile(path.join(dist,'SHA256SUMS.txt'),createHash('sha256').update(await readFile(target)).digest('hex')+'  '+path.basename(target)+'\n');
 for(const lang of ['en','zh-CN'])await copyFile(path.join(stage,`User-Guide-${lang}.txt`),path.join(dist,`User-Guide-${lang}.txt`));console.log('Installer ready:',target);

@@ -33,3 +33,12 @@ for(const effect of ['fire','wave','dots','depth']){
  assert.notEqual(hashes[0],hashes[1],effect+' must animate');await writeFile(`work/qa/effect-${effect}.png`,canvas.toBuffer('image/png'));
 }
 for(const type of ['webp','gif']){const blob=await exportAnimation({...config,lines:['直播花字'],effect:'fire',hold:1,transition:.15},type,()=>{},new AbortController().signal);await writeFile(`work/qa/fire.${type}`,new Uint8Array(await blob.arrayBuffer()));}
+
+// Export and live output use the same complete cycle, including non-default timing.
+for(const effect of ['fire','wave','dots','depth'])for(const animation of ['cut','slide']){
+ const cfg={...DEFAULT_CONFIG,effect,animation,hold:1.7,lines:['循环动画，微信：your_id']},ls=buildLayers(cfg),period=cfg.hold+(animation==='cut'?0:2*cfg.transition);
+ drawFrame(canvas,cfg,ls,period+.73);const first=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data.slice();
+ drawFrame(canvas,cfg,ls,period*2+.73);const next=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;
+ let delta=0;for(let i=0;i<first.length;i++)delta+=Math.abs(first[i]-next[i]);
+ assert.ok(delta/first.length<.1,effect+' cycle must join without a jump');
+}

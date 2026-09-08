@@ -28,6 +28,30 @@ try{
  await page.evaluate(()=>document.fonts.ready);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight>innerHeight),false,'Default editor must fit one 1024x768 screen');
  assert.equal(await output.locator('.overlay-surface').evaluate(n=>getComputedStyle(n).backgroundColor),'rgba(0, 0, 0, 0)');
+ for(const effect of ['fire','wave','dots','depth']){
+  await page.locator('#effect').selectOption(effect);
+  await page.waitForFunction(async e=>(await(await fetch('/api/state')).json()).config.effect===e,effect);
+  await output.waitForTimeout(1000);
+  const motion=await output.evaluate(async()=>{
+   const c=document.querySelector('canvas'),ctx=c.getContext('2d'),hashes=[],gaps=[];
+   let last=performance.now();
+   for(let i=0;i<12;i++){
+    await new Promise(r=>setTimeout(r,60));const now=performance.now();gaps.push(now-last);last=now;
+    const data=ctx.getImageData(0,0,c.width,c.height).data;let h=2166136261;
+    for(let p=0;p<data.length;p+=4){h=Math.imul(h^data[p],16777619);h=Math.imul(h^data[p+3],16777619);}
+    hashes.push(h);
+    for(const pixel of [0,c.width-1,(c.height-1)*c.width,c.width*c.height-1])if(data[pixel*4+3]!==0)throw Error('Opaque output corner');
+   }
+   return{distinct:new Set(hashes).size,maxGap:Math.max(...gaps)};
+  });
+  assert.ok(motion.distinct>=6,effect+' must keep visibly animating');
+  assert.ok(motion.maxGap<500,effect+' must not block the browser');
+  console.log('PASS: live '+effect+' motion '+JSON.stringify(motion));
+  await output.screenshot({path:'work/ui/effect-'+effect+'.png',omitBackground:true});
+ }
+ await page.locator('#effect').selectOption('fire');
+ await page.waitForFunction(async()=>(await(await fetch('/api/state')).json()).config.effect==='fire');
+ await output.waitForTimeout(800);
  await output.screenshot({path:'work/ui/transparent-output.png',omitBackground:true});
  await mkdir('work/ui',{recursive:true});
  await page.screenshot({path:'work/ui/editor-zh-CN.png',fullPage:true});

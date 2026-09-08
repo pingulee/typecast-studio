@@ -1,8 +1,8 @@
-import { drawBehind } from './effects';
+import { prepareEffect,drawEffect,type EffectAssets } from './effects';
 import { timing } from './config.mjs';
 import { STYLES } from './styles.mjs';
 export type Config={language:string;effect:string;lines:string[];style:string;color:string;outline:string;width:number;height:number;fontSize:number;stroke:number;depth:number;glow:number;hold:number;transition:number;animation:string;align:string;highlight:boolean;visible:boolean;font:string;singleMode:string};
-type TextLayer=HTMLCanvasElement & {textBounds?:{x:number;width:number;top:number;bottom:number;stops:number[]}};
+type TextLayer=HTMLCanvasElement & {effectAssets?:EffectAssets;textBounds?:{x:number;width:number;top:number;bottom:number;stops:number[]}};
 const fontLoads=new Map<string,Promise<void>>();
 export function loadFont(font='sans'){const family=font==='serif'?'StudioSerif':'StudioSans';let promise=fontLoads.get(family);if(!promise){promise=document.fonts.load(`900 70px ${family}`).then(()=>undefined);fontLoads.set(family,promise);}return promise;}
 export function makeTextLayer(config:Config,text:string):HTMLCanvasElement{
@@ -20,6 +20,7 @@ export function makeTextLayer(config:Config,text:string):HTMLCanvasElement{
  if(config.stroke>0){c.lineWidth=config.stroke*2;c.strokeText(text,x,baseline);}c.shadowBlur=0;
  const stops=config.style==='custom'?[config.color,config.color]:style.palette,gradient=c.createLinearGradient(0,baseline-ascent,0,baseline+descent);stops.forEach((s,i)=>gradient.addColorStop(i/(stops.length-1),s));c.fillStyle=gradient;if(config.style!=='ink')c.fillText(text,x,baseline);
  canvas.textBounds={x,width:m.width,top:baseline-ascent,bottom:baseline+descent,stops:Array.from(text).map((_,i)=>c.measureText(Array.from(text).slice(0,i+1).join('')).width)};
+ if(config.effect!=='none')canvas.effectAssets=prepareEffect(canvas,canvas.textBounds!,style.palette[2]||config.color);
  return canvas;
 }
 export function buildLayers(config:Config){return config.lines.filter(t=>t.trim()).map(t=>makeTextLayer(config,t));}
@@ -30,18 +31,10 @@ export function drawFrame(canvas:HTMLCanvasElement,config:Config,layers:HTMLCanv
  c.save();c.globalAlpha=forcedIndex===undefined?phase.alpha:1;
  c.translate(canvas.width/2+(forcedIndex===undefined?phase.x:0),canvas.height/2+(forcedIndex===undefined?phase.y:0));const scale=forcedIndex===undefined?phase.scale:1;c.scale(scale,scale);
  if(forcedIndex===undefined&&phase.reveal<1&&layer.textBounds){const b=layer.textBounds;let width=b.width*phase.reveal;if(config.animation==='typewriter'){const count=Math.floor(b.stops.length*phase.reveal);if(!count){c.restore();return phase;}width=b.stops[count-1];}c.beginPath();c.rect(b.x-canvas.width/2-config.stroke, -canvas.height/2,width+config.stroke*2,canvas.height);c.clip();}
- if(layer.textBounds){
-  c.save();c.translate(-canvas.width/2,-canvas.height/2);
-  drawBehind(c,config,layer.textBounds,seconds,(STYLES.find(s=>s.id===config.style)||STYLES[0]).palette[2]||config.color);
-  c.restore();
- }
- if(config.effect==='depth'){
-  const angle=seconds/(config.hold+(config.animation==='cut'?0:2*config.transition))*Math.PI*2,dx=Math.sin(angle)*6,dy=3+Math.cos(angle)*3;
-  c.save();c.globalAlpha*=.15;
-  for(let k=7;k>0;k--)c.drawImage(layer,-canvas.width/2+dx*k/3,-canvas.height/2+dy*k/3);
-  c.restore();
- }
- c.drawImage(layer,-canvas.width/2,-canvas.height/2);
- if(config.animation==='marquee'&&forcedIndex===undefined)c.drawImage(layer,config.width+80-canvas.width/2,-canvas.height/2);
+ c.save();c.translate(-canvas.width/2,-canvas.height/2);
+ if(layer.effectAssets&&layer.textBounds)drawEffect(c,config,layer,layer.effectAssets,layer.textBounds,seconds);
+ else c.drawImage(layer,0,0);
+ if(config.animation==='marquee'&&forcedIndex===undefined){c.translate(config.width+80,0);if(layer.effectAssets&&layer.textBounds)drawEffect(c,config,layer,layer.effectAssets,layer.textBounds,seconds);else c.drawImage(layer,0,0);}
+ c.restore();
  c.restore();return phase;
 }

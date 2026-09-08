@@ -18,7 +18,7 @@ A small live-text editor for Chinese-speaking streamers. **English installer and
 
 ## Install and use
 
-1. Install `Typecast-Studio-Setup-1.2.0.exe`. The entire installer is English, with no language selection dialog.
+1. Install `Typecast-Studio-Setup-1.3.0.exe`. The entire installer is English, with no language selection dialog.
 2. Open **Typecast Studio** from your desktop. The editor opens at `http://localhost:4318` in Chinese.
 3. Enter one line of text. Add more with **+ 添加文案** if needed.
 4. Choose a style, entrance animation and optional effect. Changes save automatically.
@@ -60,3 +60,7 @@ npm run build
 GitHub Actions checks the actual Windows tray/menu, single-instance startup, single/add/delete text, effects, transparent output, web Quit, tray Quit, restart and uninstall. Browser screenshots are captured on the disposable Windows runner. Actual Douyin capture is outside automated tests.
 
 Source: MIT. Noto CJK fonts: SIL OFL. Dependency license notices are included in the installer. No settings, credentials, browser profiles or build caches are committed.
+
+### Animated text effects
+
+Version 1.3 rebuilds the four effects around the actual lettering: turbulent flames with rising embers, refracted wave motion, travelling light particles, and solid shaded 3D lettering with moving reflections. Effects loop continuously on a transparent canvas; exported animations use the same complete cycle. The editor stays compact with one effect selector.
