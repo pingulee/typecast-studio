@@ -1,6 +1,6 @@
 {
   "name": "typecast-studio",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -60,5 +60,5 @@
   },
   "type": "module",
   "license": "MIT",
-  "description": "Live text studio with English, Korean and Chinese interfaces, Windows installer, and Douyin window capture."
+  "description": "Simple Chinese live text editor with a Windows tray app and English installer."
 }

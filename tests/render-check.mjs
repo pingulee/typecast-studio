@@ -13,7 +13,7 @@ const {buildLayers,drawFrame}=await import('../work/qa/render.mjs');
 GlobalFonts.registerFromPath('public/fonts/studio-sans.otf','StudioSans');
 GlobalFonts.registerFromPath('public/fonts/studio-serif.otf','StudioSerif');
 globalThis.document={fonts:{load:async()=>[]},createElement(tag){assert.equal(tag,'canvas');const c=createCanvas(1,1);c.toBlob=(callback,type)=>callback(new Blob([c.toBuffer(type)],{type}));return c;}};
-const config={...DEFAULT_CONFIG};const layers=buildLayers(config),canvas=document.createElement('canvas');
+const config={...DEFAULT_CONFIG,lines:['欢迎来到直播间，微信：your_wechat','游戏交流，QQ：123456789']};const layers=buildLayers(config),canvas=document.createElement('canvas');
 for(let index=0;index<layers.length;index++){drawFrame(canvas,config,layers,config.transition+.1,index);await writeFile(`work/qa/line-${index+1}.png`,canvas.toBuffer('image/png'));}
 await mkdir('docs',{recursive:true});
 const sheet=createCanvas(1600,1120),sc=sheet.getContext('2d');sc.fillStyle='#141821';sc.fillRect(0,0,1600,1120);
@@ -24,3 +24,12 @@ for(const singleMode of ['stay','loop'])for(const type of ['gif','webp']){const 
 for(const type of ['gif','webp']){let progress=0;const blob=await exportAnimation(config,type,p=>{progress=p;},new AbortController().signal);assert.equal(progress,100);await writeFile(`work/qa/export.${type}`,new Uint8Array(await blob.arrayBuffer()));}
 const long={...config,lines:['很长的文案，微信：'.repeat(10)]};drawFrame(canvas,long,buildLayers(long),.8,0);const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;let n=0;for(let i=3;i<data.length;i+=4)n+=data[i]>0;assert.ok(n>0);const off={...config,visible:false};drawFrame(canvas,off,layers,1);assert.equal(canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data.some((v,i)=>i%4===3&&v!==0),false);
 console.log('Canvas text rendering and GIF/WebP export verified without a browser or server.');
+
+const uniform={...config,lines:['Same: Color'],style:'gold'};const a=buildLayers({...uniform,highlight:true})[0],b=buildLayers({...uniform,highlight:false})[0];assert.deepEqual(a.toBuffer('image/png'),b.toBuffer('image/png'),'Legacy highlighting must have no effect');
+
+for(const effect of ['fire','wave','dots','depth']){
+ const configWithEffect={...config,effect,lines:['直播花字，微信：your_id']};const layersWithEffect=buildLayers(configWithEffect),hashes=[];
+ for(const time of [1,1.7]){drawFrame(canvas,configWithEffect,layersWithEffect,time);const data=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;for(const pixel of [0,canvas.width-1,(canvas.height-1)*canvas.width,canvas.width*canvas.height-1])assert.equal(data[pixel*4+3],0,effect+' transparent corner');hashes.push(createHash('sha256').update(canvas.toBuffer('image/png')).digest('hex'));}
+ assert.notEqual(hashes[0],hashes[1],effect+' must animate');await writeFile(`work/qa/effect-${effect}.png`,canvas.toBuffer('image/png'));
+}
+for(const type of ['webp','gif']){const blob=await exportAnimation({...config,lines:['直播花字'],effect:'fire',hold:1,transition:.15},type,()=>{},new AbortController().signal);await writeFile(`work/qa/fire.${type}`,new Uint8Array(await blob.arrayBuffer()));}

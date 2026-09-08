@@ -1,36 +1,41 @@
-// Runs only on the disposable GitHub Windows runner, never on the user's PC.
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright-core';
 if(process.env.GITHUB_ACTIONS!=='true'||process.platform!=='win32')throw new Error('Windows CI only');
 const browser=await chromium.launch({channel:'msedge',headless:true});
 try{
- const page=await browser.newPage({viewport:{width:1440,height:1100}});
+ const page=await browser.newPage({viewport:{width:1024,height:768}});
  const failures=[];page.on('pageerror',e=>failures.push(e.message));
  await page.goto('http://localhost:4318');
- const picker=page.getByRole('combobox',{name:'Language / 언어 / 语言'});
- await picker.waitFor();await page.waitForFunction(()=>!document.querySelector('.language-picker select')?.disabled);
- const before=await page.locator('.line-input').first().inputValue();
- const output=await browser.newPage();await output.goto('http://localhost:4318/overlay');
- for(const [language,label,title] of [['en','Broadcast text','Text Output'],['ko','방송 문구','텍스트 출력'],['zh-CN','直播文案','字幕输出']]){
-  await picker.selectOption(language);
-  await page.waitForFunction(lang=>document.documentElement.lang===lang,language);
-  await page.getByRole('heading',{name:label,exact:true}).waitFor();
-  await page.waitForFunction(async lang=>(await(await fetch('/api/state')).json()).config.language===lang,language);
-  assert.equal(await page.locator('.line-input').first().inputValue(),before);
-  await output.goto('http://localhost:4318/capture?key=green');
-  await output.waitForFunction(prefix=>document.title.startsWith(prefix),title);
-  await page.evaluate(()=>document.fonts.ready);
-  const clipped=await page.locator('.style-tile b').evaluateAll(nodes=>nodes.filter(n=>n.scrollWidth>n.parentElement.clientWidth-8).map(n=>n.textContent));
-  assert.deepEqual(clipped,[],language+' overflowing design sample');
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,language+' horizontal overflow');
-  await mkdir('work/ui',{recursive:true});
-  await page.screenshot({path:`work/ui/editor-${language}.png`,fullPage:true});
- }
- await page.setViewportSize({width:760,height:1100});
- await picker.selectOption('en');
- await page.waitForFunction(()=>document.documentElement.lang==='en');
- assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'narrow English layout overflow');
+ await page.waitForFunction(()=>!document.querySelector('fieldset')?.disabled);
+ assert.equal(await page.locator('html').getAttribute('lang'),'zh-CN');
+ assert.equal(await page.locator('.language-picker').count(),0);
+ await page.getByRole('heading',{name:'直播文案',exact:true}).waitFor();
+ assert.equal(await page.locator('.line-input').count(),1);
+ const sentence='欢迎来到直播间，微信：your_wechat';
+ await page.locator('.line-input').first().fill(sentence);
+ await page.getByRole('button',{name:'添加文案',exact:true}).click();
+ assert.equal(await page.locator('.line-input').count(),2);
+ await page.locator('.line-input').nth(1).fill('第二条文案，QQ：123456789');
+ await page.getByRole('button',{name:'删除 2',exact:true}).click();
+ assert.equal(await page.locator('.line-input').count(),1);
+ assert.equal(await page.locator('.line-input').first().inputValue(),sentence);
+ await page.locator('#effect').selectOption('fire');
+ await page.waitForFunction(async text=>{const s=await(await fetch('/api/state')).json();return s.config.lines.length===1&&s.config.lines[0]===text&&!s.config.highlight&&s.config.effect==='fire';},sentence);
+ await mkdir('work/ui',{recursive:true});
+ const output=await browser.newPage();await output.goto('http://localhost:4318/capture?key=green');
+ await output.waitForFunction(()=>document.title==='字幕输出 - Typecast Studio');
+ await page.evaluate(()=>document.fonts.ready);
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollHeight>innerHeight),false,'Default editor must fit one 1024x768 screen');
+ assert.equal(await output.locator('.overlay-surface').evaluate(n=>getComputedStyle(n).backgroundColor),'rgba(0, 0, 0, 0)');
+ await output.screenshot({path:'work/ui/transparent-output.png',omitBackground:true});
+ await mkdir('work/ui',{recursive:true});
+ await page.screenshot({path:'work/ui/editor-zh-CN.png',fullPage:true});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.setViewportSize({width:760,height:1040});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.getByRole('button',{name:'退出程序',exact:true}).click();
+ await page.getByRole('heading',{name:'程序已退出',exact:true}).waitFor();
  assert.deepEqual(failures,[]);
- console.log('PASS: three-language UI, saved preference, unchanged user text, localized output titles and responsive layout.');
+ console.log('PASS: Chinese-only simple UI, one entry, add/delete, uniform color, output, and web Quit.');
 }finally{await browser.close();}

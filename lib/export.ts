@@ -5,7 +5,7 @@ export function downloadBlob(blob:Blob,name:string){const url=URL.createObjectUR
 export function canvasBlob(canvas:HTMLCanvasElement,type:string){return new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('无法生成图片。')),type,1));}
 export async function exportAnimation(config:Config,type:'gif'|'webp',progress:(p:number)=>void,signal:AbortSignal){
  await loadFont(config.font);const layers=buildLayers(config);if(!layers.length)throw new Error('请先输入文案。');const canvas=document.createElement('canvas'),frames:{time:number;duration:number}[]=[],transition=config.animation==='cut'?0:config.transition,span=config.hold+2*transition;
- const stay=layers.length===1&&config.singleMode!=='loop',dynamic=['pulse','marquee'].includes(config.animation),once=stay&&!dynamic;
+ const stay=layers.length===1&&config.singleMode!=='loop',dynamic=['pulse','marquee'].includes(config.animation)||(config.effect&&config.effect!=='none'),once=stay&&!dynamic;
  for(let i=0;i<layers.length;i++){
   const base=i*span,steps=Math.max(1,Math.round(transition*20)),step=transition/steps;
   if(dynamic){const n=Math.round(span*20);for(let k=0;k<n;k++)frames.push({time:base+(k+.5)*span/n,duration:span/n*1000});continue;}

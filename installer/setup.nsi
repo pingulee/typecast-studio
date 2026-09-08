@@ -2,8 +2,7 @@ Unicode true
 !include "MUI2.nsh"
 !include "LogicLib.nsh"
 !include "x64.nsh"
-!include "FileFunc.nsh"
-Name "Typecast Studio 1.1.0"
+Name "Typecast Studio 1.2.0"
 OutFile "${OUTPUT}"
 InstallDir "$PROGRAMFILES64\Typecast Studio"
 InstallDirRegKey HKLM "Software\Typecast Studio" "InstallDir"
@@ -13,68 +12,45 @@ SetCompressorDictSize 32
 BrandingText "Typecast Studio"
 Icon "${ICON}"
 UninstallIcon "${ICON}"
-VIProductVersion "1.1.0.0"
+VIProductVersion "1.2.0.0"
 VIAddVersionKey /LANG=1033 "ProductName" "Typecast Studio"
 VIAddVersionKey /LANG=1033 "FileDescription" "Typecast Studio Installer"
-VIAddVersionKey /LANG=1033 "FileVersion" "1.1.0.0"
+VIAddVersionKey /LANG=1033 "FileVersion" "1.2.0.0"
 VIAddVersionKey /LANG=1033 "LegalCopyright" "Copyright 2026 Typecast Studio contributors"
 !define MUI_ABORTWARNING
-!define MUI_LANGDLL_ALWAYSSHOW
-!define MUI_LANGDLL_ALLLANGUAGES
-!define MUI_LANGDLL_WINDOWTITLE "Language / 언어 / 语言"
-!define MUI_LANGDLL_INFO "Select a language / 언어를 선택하세요 / 请选择语言"
-!define MUI_LANGDLL_REGISTRY_ROOT HKCU
-!define MUI_LANGDLL_REGISTRY_KEY "Software\Typecast Studio"
-!define MUI_LANGDLL_REGISTRY_VALUENAME "InstallerLanguage"
-!define MUI_WELCOMEPAGE_TITLE "$(WelcomeTitle)"
-!define MUI_WELCOMEPAGE_TEXT "$(WelcomeText)"
+!define MUI_WELCOMEPAGE_TITLE "Welcome to Typecast Studio"
+!define MUI_WELCOMEPAGE_TEXT "A simple live text editor with a Chinese web interface.$\r$\n$\r$\nStart with one text entry and add more with +. Change the style, choose an animation, and open the live output window.$\r$\n$\r$\nEverything is included. No separate Node.js or developer tools are required.$\r$\n$\r$\nPlease quit the previous version before upgrading."
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
-!define MUI_FINISHPAGE_TITLE "$(FinishTitle)"
-!define MUI_FINISHPAGE_TEXT "$(FinishText)"
+!define MUI_FINISHPAGE_TITLE "Installation complete"
+!define MUI_FINISHPAGE_TEXT "Open Typecast Studio from your desktop or Start menu.$\r$\n$\r$\nThe web editor is in Chinese. A tray icon lets you open the editor, open the output window, or quit.$\r$\n$\r$\nIf startup is enabled, the app starts quietly when you sign in."
 !insertmacro MUI_PAGE_FINISH
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
-!insertmacro MUI_LANGUAGE "Korean"
-!insertmacro MUI_LANGUAGE "SimpChinese"
-!include "languages.nsh"
-!insertmacro MUI_RESERVEFILE_LANGDLL
 Function .onInit
   SetRegView 64
+  SetShellVarContext current
   StrCpy $LANGUAGE 1033
-  !insertmacro MUI_LANGDLL_DISPLAY
-  ${GetParameters} $0
-  ClearErrors
-  ${GetOptions} $0 "/LANGUAGE=" $1
-  ${IfNot} ${Errors}
-    ${If} $1 == 1033
-    ${OrIf} $1 == 1042
-    ${OrIf} $1 == 2052
-      StrCpy $LANGUAGE $1
-    ${EndIf}
-  ${EndIf}
   ${IfNot} ${RunningX64}
-    MessageBox MB_OK|MB_ICONSTOP "$(Need64)"
+    MessageBox MB_OK|MB_ICONSTOP "This version requires 64-bit Windows."
     Abort
   ${EndIf}
-  SetRegView 64
-  SetShellVarContext current
 FunctionEnd
-Section "$(CoreFiles)" Core
+Section "Program files (required)" Core
   SectionIn RO
   IfFileExists "$INSTDIR\runtime\node.exe" 0 copy_files
     nsExec::Exec '"$INSTDIR\runtime\node.exe" "$INSTDIR\control.mjs" stop'
     Pop $0
-    Sleep 1200
+    Sleep 1800
   copy_files:
   SetOutPath "$INSTDIR"
   File /r "${PAYLOAD}\*.*"
   WriteRegStr HKLM "Software\Typecast Studio" "InstallDir" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayName" "Typecast Studio"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayVersion" "1.1.0"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayVersion" "1.2.0"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "Publisher" "Typecast Studio contributors"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "DisplayIcon" "$INSTDIR\TypecastStudio.exe"
@@ -83,47 +59,38 @@ Section "$(CoreFiles)" Core
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio" "NoRepair" 1
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "TypecastStudio"
-  ; Replace owned shortcut folders when upgrading from any language.
+  DeleteRegValue HKCU "Software\Typecast Studio" "InstallerLanguage"
   RMDir /r "$SMPROGRAMS\直播花字工作室"
   Delete "$DESKTOP\直播花字工作室.lnk"
   RMDir /r "$SMPROGRAMS\Typecast Studio"
   CreateDirectory "$SMPROGRAMS\Typecast Studio"
   CreateShortcut "$SMPROGRAMS\Typecast Studio\Typecast Studio.lnk" "$INSTDIR\TypecastStudio.exe"
-  CreateShortcut "$SMPROGRAMS\Typecast Studio\$(StopService).lnk" "$INSTDIR\TypecastStudio.exe" "--stop"
-  StrCpy $2 "User-Guide-en.txt"
-  ${If} $LANGUAGE == 1042
-    StrCpy $2 "User-Guide-ko.txt"
-  ${ElseIf} $LANGUAGE == 2052
-    StrCpy $2 "User-Guide-zh-CN.txt"
-  ${EndIf}
-  CreateShortcut "$SMPROGRAMS\Typecast Studio\$(UserGuide).lnk" "$INSTDIR\$2"
-  WriteRegStr HKCU "Software\Typecast Studio" "InstallerLanguage" "$LANGUAGE"
-  CreateShortcut "$SMPROGRAMS\Typecast Studio\$(UninstallLabel).lnk" "$INSTDIR\Uninstall.exe"
+  CreateShortcut "$SMPROGRAMS\Typecast Studio\Quit.lnk" "$INSTDIR\TypecastStudio.exe" "--stop"
+  CreateShortcut "$SMPROGRAMS\Typecast Studio\User guide.lnk" "$INSTDIR\User-Guide-zh-CN.txt"
+  CreateShortcut "$SMPROGRAMS\Typecast Studio\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 SectionEnd
-Section "$(StartupOption)" Startup
+Section "Start automatically when I sign in (recommended)" Startup
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "TypecastStudio" '"$INSTDIR\TypecastStudio.exe" --background'
 SectionEnd
-Section "$(DesktopOption)" Desktop
+Section "Create a desktop shortcut" Desktop
   CreateShortcut "$DESKTOP\Typecast Studio.lnk" "$INSTDIR\TypecastStudio.exe"
 SectionEnd
 Function un.onInit
   SetRegView 64
-  StrCpy $LANGUAGE 1033
-  !insertmacro MUI_UNGETLANGUAGE
   SetShellVarContext current
+  StrCpy $LANGUAGE 1033
 FunctionEnd
 Section "Uninstall"
   nsExec::Exec '"$INSTDIR\runtime\node.exe" "$INSTDIR\control.mjs" stop'
   Pop $0
-  Sleep 1500
+  Sleep 1800
   DeleteRegValue HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "TypecastStudio"
   Delete "$DESKTOP\直播花字工作室.lnk"
+  Delete "$DESKTOP\Typecast Studio.lnk"
   RMDir /r "$SMPROGRAMS\直播花字工作室"
+  RMDir /r "$SMPROGRAMS\Typecast Studio"
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\TypecastStudio"
   DeleteRegKey HKLM "Software\Typecast Studio"
-  Delete "$DESKTOP\Typecast Studio.lnk"
-  RMDir /r "$SMPROGRAMS\Typecast Studio"
-  ; Remove only owned program files. Preserve the user's AppData settings.
   Delete "$INSTDIR\TypecastStudio.exe"
   Delete "$INSTDIR\server.mjs"
   Delete "$INSTDIR\control.mjs"
